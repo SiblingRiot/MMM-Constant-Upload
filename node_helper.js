@@ -5,43 +5,34 @@
  * MIT Licensed.
  */
 
-var NodeHelper = require("node_helper");
+const NodeHelper = require('node_helper');
+const { spawn } = require('child_process');
 
 module.exports = NodeHelper.create({
+  start: function() {
+    console.log(`Starting ${this.name} module`);
 
-	// Override socketNotificationReceived method.
+    // replace '/path/to/shell/file.sh' with the actual path to your shell file
+    const shellProcess = spawn('sh', ['/home/pi/MagicMirror/Connections/upload.sh']);
 
-	/* socketNotificationReceived(notification, payload)
-	 * This method is called when a socket notification arrives.
-	 *
-	 * argument notification string - The identifier of the noitication.
-	 * argument payload mixed - The payload of the notification.
-	 */
-	socketNotificationReceived: function(notification, payload) {
-		if (notification === "MMM-Constant-Upload-NOTIFICATION_TEST") {
-			console.log("Working notification system. Notification:", notification, "payload: ", payload);
-			// Send notification
-			this.sendNotificationTest(this.anotherFunction()); //Is possible send objects :)
-		}
-	},
+    // when the shell process outputs data, broadcast it to the client
+    shellProcess.stdout.on('data', (data) => {
+      this.sendSocketNotification('SHELL_OUTPUT', data.toString());
+    });
 
-	// Example function send notification test
-	sendNotificationTest: function(payload) {
-		this.sendSocketNotification("MMM-Constant-Upload-NOTIFICATION_TEST", payload);
-	},
+    // when the shell process encounters an error, log it to the console
+    shellProcess.on('error', (error) => {
+      console.error(`Shell error: ${error}`);
+    });
 
-	// this you can create extra routes for your module
-	extraRoutes: function() {
-		var self = this;
-		this.expressApp.get("/MMM-Constant-Upload/extra_route", function(req, res) {
-			// call another function
-			values = self.anotherFunction();
-			res.send(values);
-		});
-	},
+    // when the shell process exits, log the exit code to the console
+    shellProcess.on('exit', (code) => {
+      console.log(`Shell process exited with code ${code}`);
+    });
+  },
 
-	// Test another function
-	anotherFunction: function() {
-		return {date: new Date()};
-	}
+  // handle incoming socket notifications from the client
+  socketNotificationReceived: function(notification, payload) {
+    // handle any custom logic here
+  }
 });
