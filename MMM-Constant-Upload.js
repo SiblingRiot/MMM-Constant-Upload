@@ -7,21 +7,12 @@
  * MIT Licensed.
  */
 
-Module.register("MMM-Constant-Upload", {
-	defaults: {
-		updateInterval: 10000,
-		retryDelay: 5000
-	},
-
+Module.register('MMM-Constant-Upload', {
   start: function() {
-    console.log(`Starting ${this.name} module`);
-    this.sendSocketNotification('START_SHELL');
+    this.sendSocketNotification('START_SCRIPT');
   },
 
-  // handle incoming socket notifications from the node helper
-  socketNotificationReceived: function(notification, payload) {
-    if (notification === 'SHELL_OUTPUT') {
-      // handle the shell output here
-    }
-  }
+  stop: function() {
+    this.sendSocketNotification('STOP_SCRIPT');
+  },
 });
