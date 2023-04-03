@@ -10,29 +10,27 @@ const { spawn } = require('child_process');
 
 module.exports = NodeHelper.create({
   start: function() {
-    console.log(`Starting ${this.name} module`);
+    console.log('Starting MMM-Compliment-Sender');
 
-    // replace '/path/to/shell/file.sh' with the actual path to your shell file
-    const shellProcess = spawn('sh', ['/home/pi/MagicMirror/Connections/upload.sh']);
-
-    // when the shell process outputs data, broadcast it to the client
-    shellProcess.stdout.on('data', (data) => {
-      this.sendSocketNotification('SHELL_OUTPUT', data.toString());
+    this.child = spawn('sh', ['/home/pi/MagicMirror/Connections/upload.sh'], {
+      detached: true,
+      stdio: 'ignore',
     });
 
-    // when the shell process encounters an error, log it to the console
-    shellProcess.on('error', (error) => {
-      console.error(`Shell error: ${error}`);
-    });
-
-    // when the shell process exits, log the exit code to the console
-    shellProcess.on('exit', (code) => {
-      console.log(`Shell process exited with code ${code}`);
-    });
+    this.child.unref();
   },
 
-  // handle incoming socket notifications from the client
-  socketNotificationReceived: function(notification, payload) {
-    // handle any custom logic here
-  }
+  stop: function() {
+    console.log('Stopping MMM-Compliment-Sender');
+
+    process.kill(-this.child.pid);
+  },
+
+  socketNotificationReceived: function(notification) {
+    if (notification === 'START_SCRIPT') {
+      this.start();
+    } else if (notification === 'STOP_SCRIPT') {
+      this.stop();
+    }
+  },
 });
